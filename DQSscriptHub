@@ -8,7 +8,7 @@ local Camera = workspace.CurrentCamera
 
 local TOGGLE_KEY = Enum.KeyCode.RightControl
 local GUI_NAME = "DarkQuietCommunity_Hub"
-local VERSION_TAG = "v0.0.3"
+local VERSION_TAG = "v0.0.4"
 local parentGui = (gethui and gethui()) or game:GetService("CoreGui") or LocalPlayer:WaitForChild("PlayerGui")
 
 if _G.DQC_Hub_Unload then
@@ -24,6 +24,7 @@ local selectedPlayer = nil
 local loopTpConnection = nil
 local noclipConnection = nil
 local clickTpConnection = nil
+local clickDeleteConnection = nil
 local infJumpConnection = nil
 local espConnection = nil
 
@@ -33,7 +34,7 @@ local espShowHealth = true
 local espShowDist = true
 local espShowTool = true
 local espShowTracers = false
-local espCurrentColor = Color3.fromRGB(0, 180, 255)
+local espCurrentColor = Color3.fromRGB(180, 80, 255)
 
 local espObjects = {}
 local tracerObjects = {}
@@ -43,6 +44,7 @@ local isEspSettingsOpen = false
 local currentTab = "Players"
 local noclipEnabled = false
 local clickTpEnabled = false
+local clickDeleteEnabled = false
 local infJumpEnabled = false
 local isSpectating = false
 
@@ -53,9 +55,9 @@ ScreenGui.Parent = parentGui
 
 local ToggleButton = Instance.new("ImageButton")
 ToggleButton.Name = "FloatingToggle"
-ToggleButton.Size = UDim2.new(0, 48, 0, 48)
-ToggleButton.Position = UDim2.new(0, 25, 0.5, -24)
-ToggleButton.BackgroundColor3 = Color3.fromRGB(20, 22, 32)
+ToggleButton.Size = UDim2.new(0, 50, 0, 50)
+ToggleButton.Position = UDim2.new(0, 25, 0.5, -25)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(22, 14, 38)
 ToggleButton.BorderSizePixel = 0
 ToggleButton.Active = true
 ToggleButton.AutoButtonColor = false
@@ -66,24 +68,31 @@ ToggleCorner.CornerRadius = UDim.new(1, 0)
 ToggleCorner.Parent = ToggleButton
 
 local ToggleStroke = Instance.new("UIStroke")
-ToggleStroke.Color = Color3.fromRGB(0, 180, 255)
+ToggleStroke.Color = Color3.fromRGB(180, 70, 255)
 ToggleStroke.Thickness = 2
 ToggleStroke.Parent = ToggleButton
+
+local ToggleGlow = Instance.new("UIGradient")
+ToggleGlow.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(200, 90, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(120, 40, 210))
+})
+ToggleGlow.Parent = ToggleStroke
 
 local ToggleIcon = Instance.new("TextLabel")
 ToggleIcon.Size = UDim2.new(1, 0, 1, 0)
 ToggleIcon.BackgroundTransparency = 1
-ToggleIcon.Text = "TP"
+ToggleIcon.Text = "DQC"
 ToggleIcon.Font = Enum.Font.GothamBold
-ToggleIcon.TextSize = 16
-ToggleIcon.TextColor3 = Color3.fromRGB(0, 190, 255)
+ToggleIcon.TextSize = 13
+ToggleIcon.TextColor3 = Color3.fromRGB(230, 150, 255)
 ToggleIcon.Parent = ToggleButton
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 380, 0, 500)
 MainFrame.Position = UDim2.new(0.5, -190, 0.5, -250)
-MainFrame.BackgroundColor3 = Color3.fromRGB(14, 16, 23)
+MainFrame.BackgroundColor3 = Color3.fromRGB(14, 10, 24)
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
 MainFrame.Active = true
@@ -94,20 +103,27 @@ MainCorner.CornerRadius = UDim.new(0, 14)
 MainCorner.Parent = MainFrame
 
 local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(45, 52, 75)
+MainStroke.Color = Color3.fromRGB(85, 45, 130)
 MainStroke.Thickness = 1.5
 MainStroke.Parent = MainFrame
 
 local TopBar = Instance.new("Frame")
 TopBar.Name = "TopBar"
 TopBar.Size = UDim2.new(1, 0, 0, 52)
-TopBar.BackgroundColor3 = Color3.fromRGB(20, 23, 34)
+TopBar.BackgroundColor3 = Color3.fromRGB(22, 15, 38)
 TopBar.BorderSizePixel = 0
 TopBar.Parent = MainFrame
 
 local TopBarCorner = Instance.new("UICorner")
 TopBarCorner.CornerRadius = UDim.new(0, 14)
 TopBarCorner.Parent = TopBar
+
+local TopBarGradient = Instance.new("UIGradient")
+TopBarGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(32, 20, 56)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(18, 12, 32))
+})
+TopBarGradient.Parent = TopBar
 
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0, 180, 0, 24)
@@ -124,7 +140,7 @@ local Subtitle = Instance.new("TextLabel")
 Subtitle.Size = UDim2.new(0, 200, 0, 18)
 Subtitle.Position = UDim2.new(0, 16, 0, 27)
 Subtitle.Text = "by makor444  •  " .. VERSION_TAG
-Subtitle.TextColor3 = Color3.fromRGB(0, 180, 255)
+Subtitle.TextColor3 = Color3.fromRGB(190, 100, 255)
 Subtitle.TextSize = 11
 Subtitle.Font = Enum.Font.GothamSemibold
 Subtitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -133,10 +149,10 @@ Subtitle.Parent = TopBar
 
 local KeyHint = Instance.new("TextLabel")
 KeyHint.Size = UDim2.new(0, 56, 0, 20)
-KeyHint.Position = UDim2.new(1, -165, 0.5, -10)
-KeyHint.BackgroundColor3 = Color3.fromRGB(30, 36, 52)
+KeyHint.Position = UDim2.new(1, -135, 0.5, -10)
+KeyHint.BackgroundColor3 = Color3.fromRGB(36, 22, 60)
 KeyHint.Text = "[R-CTRL]"
-KeyHint.TextColor3 = Color3.fromRGB(0, 190, 255)
+KeyHint.TextColor3 = Color3.fromRGB(190, 100, 255)
 KeyHint.TextSize = 10
 KeyHint.Font = Enum.Font.GothamBold
 KeyHint.Parent = TopBar
@@ -145,28 +161,14 @@ local KeyHintCorner = Instance.new("UICorner")
 KeyHintCorner.CornerRadius = UDim.new(0, 4)
 KeyHintCorner.Parent = KeyHint
 
-local UnloadBtn = Instance.new("TextButton")
-UnloadBtn.Size = UDim2.new(0, 28, 0, 28)
-UnloadBtn.Position = UDim2.new(1, -102, 0.5, -14)
-UnloadBtn.Text = "OFF"
-UnloadBtn.TextColor3 = Color3.fromRGB(255, 170, 0)
-UnloadBtn.TextSize = 10
-UnloadBtn.Font = Enum.Font.GothamBold
-UnloadBtn.BackgroundColor3 = Color3.fromRGB(35, 30, 25)
-UnloadBtn.Parent = TopBar
-
-local UnloadCorner = Instance.new("UICorner")
-UnloadCorner.CornerRadius = UDim.new(0, 6)
-UnloadCorner.Parent = UnloadBtn
-
 local HideBtn = Instance.new("TextButton")
 HideBtn.Size = UDim2.new(0, 28, 0, 28)
 HideBtn.Position = UDim2.new(1, -68, 0.5, -14)
 HideBtn.Text = "-"
-HideBtn.TextColor3 = Color3.fromRGB(180, 190, 210)
+HideBtn.TextColor3 = Color3.fromRGB(200, 180, 230)
 HideBtn.TextSize = 16
 HideBtn.Font = Enum.Font.GothamBold
-HideBtn.BackgroundColor3 = Color3.fromRGB(30, 35, 50)
+HideBtn.BackgroundColor3 = Color3.fromRGB(34, 22, 55)
 HideBtn.Parent = TopBar
 
 local HideCorner = Instance.new("UICorner")
@@ -180,7 +182,7 @@ CloseBtn.Text = "X"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 90, 90)
 CloseBtn.TextSize = 13
 CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 25, 30)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(44, 20, 36)
 CloseBtn.Parent = TopBar
 
 local CloseCorner = Instance.new("UICorner")
@@ -190,7 +192,7 @@ CloseCorner.Parent = CloseBtn
 local TabBar = Instance.new("Frame")
 TabBar.Size = UDim2.new(1, -30, 0, 34)
 TabBar.Position = UDim2.new(0, 15, 0, 60)
-TabBar.BackgroundColor3 = Color3.fromRGB(20, 23, 33)
+TabBar.BackgroundColor3 = Color3.fromRGB(22, 15, 38)
 TabBar.BorderSizePixel = 0
 TabBar.Parent = MainFrame
 
@@ -201,7 +203,7 @@ TabBarCorner.Parent = TabBar
 local TabPlayersBtn = Instance.new("TextButton")
 TabPlayersBtn.Size = UDim2.new(0.5, -2, 1, -4)
 TabPlayersBtn.Position = UDim2.new(0, 2, 0, 2)
-TabPlayersBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 240)
+TabPlayersBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 240)
 TabPlayersBtn.Text = "Players"
 TabPlayersBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 TabPlayersBtn.TextSize = 12
@@ -215,9 +217,9 @@ TabPlayersCorner.Parent = TabPlayersBtn
 local TabUtilsBtn = Instance.new("TextButton")
 TabUtilsBtn.Size = UDim2.new(0.5, -2, 1, -4)
 TabUtilsBtn.Position = UDim2.new(0.5, 0, 0, 2)
-TabUtilsBtn.BackgroundColor3 = Color3.fromRGB(20, 23, 33)
+TabUtilsBtn.BackgroundColor3 = Color3.fromRGB(22, 15, 38)
 TabUtilsBtn.Text = "Utilities & ESP"
-TabUtilsBtn.TextColor3 = Color3.fromRGB(150, 160, 180)
+TabUtilsBtn.TextColor3 = Color3.fromRGB(160, 140, 190)
 TabUtilsBtn.TextSize = 12
 TabUtilsBtn.Font = Enum.Font.GothamBold
 TabUtilsBtn.Parent = TabBar
@@ -236,7 +238,7 @@ PlayersPage.Parent = MainFrame
 local SearchContainer = Instance.new("Frame")
 SearchContainer.Size = UDim2.new(1, -30, 0, 34)
 SearchContainer.Position = UDim2.new(0, 15, 0, 4)
-SearchContainer.BackgroundColor3 = Color3.fromRGB(20, 23, 33)
+SearchContainer.BackgroundColor3 = Color3.fromRGB(22, 15, 38)
 SearchContainer.BorderSizePixel = 0
 SearchContainer.Parent = PlayersPage
 
@@ -244,13 +246,18 @@ local SearchCorner = Instance.new("UICorner")
 SearchCorner.CornerRadius = UDim.new(0, 8)
 SearchCorner.Parent = SearchContainer
 
+local SearchStroke = Instance.new("UIStroke")
+SearchStroke.Color = Color3.fromRGB(60, 35, 95)
+SearchStroke.Thickness = 1
+SearchStroke.Parent = SearchContainer
+
 local SearchBox = Instance.new("TextBox")
 SearchBox.Size = UDim2.new(1, -20, 1, 0)
 SearchBox.Position = UDim2.new(0, 10, 0, 0)
 SearchBox.PlaceholderText = "Search player name..."
 SearchBox.Text = ""
 SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-SearchBox.PlaceholderColor3 = Color3.fromRGB(120, 130, 150)
+SearchBox.PlaceholderColor3 = Color3.fromRGB(130, 110, 160)
 SearchBox.TextSize = 12
 SearchBox.Font = Enum.Font.Gotham
 SearchBox.BackgroundTransparency = 1
@@ -260,10 +267,10 @@ SearchBox.Parent = SearchContainer
 local PlayerScroll = Instance.new("ScrollingFrame")
 PlayerScroll.Size = UDim2.new(1, -30, 0, 250)
 PlayerScroll.Position = UDim2.new(0, 15, 0, 44)
-PlayerScroll.BackgroundColor3 = Color3.fromRGB(12, 14, 20)
+PlayerScroll.BackgroundColor3 = Color3.fromRGB(11, 8, 20)
 PlayerScroll.BorderSizePixel = 0
 PlayerScroll.ScrollBarThickness = 3
-PlayerScroll.ScrollBarImageColor3 = Color3.fromRGB(0, 170, 255)
+PlayerScroll.ScrollBarImageColor3 = Color3.fromRGB(180, 70, 255)
 PlayerScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 PlayerScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 PlayerScroll.Parent = PlayersPage
@@ -291,7 +298,7 @@ TpBtn.Text = "Teleport"
 TpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 TpBtn.TextSize = 13
 TpBtn.Font = Enum.Font.GothamBold
-TpBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+TpBtn.BackgroundColor3 = Color3.fromRGB(160, 55, 250)
 TpBtn.Parent = PlayersPage
 
 local TpCorner = Instance.new("UICorner")
@@ -305,7 +312,7 @@ LoopTpBtn.Text = "Follow [OFF]"
 LoopTpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 LoopTpBtn.TextSize = 12
 LoopTpBtn.Font = Enum.Font.GothamBold
-LoopTpBtn.BackgroundColor3 = Color3.fromRGB(30, 35, 48)
+LoopTpBtn.BackgroundColor3 = Color3.fromRGB(32, 22, 52)
 LoopTpBtn.Parent = PlayersPage
 
 local LoopCorner = Instance.new("UICorner")
@@ -319,7 +326,7 @@ ViewBtn.Text = "Spectate [OFF]"
 ViewBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ViewBtn.TextSize = 12
 ViewBtn.Font = Enum.Font.GothamBold
-ViewBtn.BackgroundColor3 = Color3.fromRGB(30, 35, 48)
+ViewBtn.BackgroundColor3 = Color3.fromRGB(32, 22, 52)
 ViewBtn.Parent = PlayersPage
 
 local ViewCorner = Instance.new("UICorner")
@@ -333,7 +340,7 @@ UtilsPage.Position = UDim2.new(0, 0, 0, 102)
 UtilsPage.BackgroundTransparency = 1
 UtilsPage.BorderSizePixel = 0
 UtilsPage.ScrollBarThickness = 3
-UtilsPage.ScrollBarImageColor3 = Color3.fromRGB(0, 170, 255)
+UtilsPage.ScrollBarImageColor3 = Color3.fromRGB(180, 70, 255)
 UtilsPage.CanvasSize = UDim2.new(0, 0, 0, 0)
 UtilsPage.AutomaticCanvasSize = Enum.AutomaticSize.Y
 UtilsPage.Visible = false
@@ -356,7 +363,7 @@ local function createSectionHeader(title, parent)
     lbl.Size = UDim2.new(1, 0, 0, 24)
     lbl.BackgroundTransparency = 1
     lbl.Text = title
-    lbl.TextColor3 = Color3.fromRGB(0, 190, 255)
+    lbl.TextColor3 = Color3.fromRGB(190, 100, 255)
     lbl.TextSize = 11
     lbl.Font = Enum.Font.GothamBold
     lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -368,7 +375,7 @@ local function createToggleCard(name, text, tag, parent, defaultState)
     local btn = Instance.new("TextButton")
     btn.Name = name
     btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.BackgroundColor3 = Color3.fromRGB(20, 23, 33)
+    btn.BackgroundColor3 = Color3.fromRGB(22, 15, 38)
     btn.Text = ""
     btn.AutoButtonColor = false
     btn.Parent = parent
@@ -378,7 +385,7 @@ local function createToggleCard(name, text, tag, parent, defaultState)
     corner.Parent = btn
     
     local stroke = Instance.new("UIStroke")
-    stroke.Color = defaultState and Color3.fromRGB(0, 180, 100) or Color3.fromRGB(40, 45, 65)
+    stroke.Color = defaultState and Color3.fromRGB(170, 60, 255) or Color3.fromRGB(55, 35, 85)
     stroke.Thickness = 1
     stroke.Parent = btn
     
@@ -389,7 +396,7 @@ local function createToggleCard(name, text, tag, parent, defaultState)
     tagLbl.Text = "[" .. tag .. "]"
     tagLbl.TextSize = 11
     tagLbl.Font = Enum.Font.GothamBold
-    tagLbl.TextColor3 = Color3.fromRGB(0, 180, 255)
+    tagLbl.TextColor3 = Color3.fromRGB(190, 100, 255)
     tagLbl.Parent = btn
     
     local titleLbl = Instance.new("TextLabel")
@@ -408,11 +415,11 @@ local function createToggleCard(name, text, tag, parent, defaultState)
     badge.Name = "Badge"
     badge.Size = UDim2.new(0, 52, 0, 22)
     badge.Position = UDim2.new(1, -60, 0.5, -11)
-    badge.BackgroundColor3 = defaultState and Color3.fromRGB(0, 180, 100) or Color3.fromRGB(35, 40, 55)
+    badge.BackgroundColor3 = defaultState and Color3.fromRGB(150, 50, 240) or Color3.fromRGB(36, 24, 58)
     badge.Text = defaultState and "ON" or "OFF"
     badge.TextSize = 10
     badge.Font = Enum.Font.GothamBold
-    badge.TextColor3 = defaultState and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 160, 180)
+    badge.TextColor3 = defaultState and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(160, 140, 190)
     badge.Parent = btn
     
     local badgeCorner = Instance.new("UICorner")
@@ -420,48 +427,6 @@ local function createToggleCard(name, text, tag, parent, defaultState)
     badgeCorner.Parent = badge
     
     return btn, badge, stroke
-end
-
-local function createActionCard(name, text, tag, parent)
-    local btn = Instance.new("TextButton")
-    btn.Name = name
-    btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.BackgroundColor3 = Color3.fromRGB(20, 23, 33)
-    btn.Text = ""
-    btn.AutoButtonColor = false
-    btn.Parent = parent
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = btn
-    
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(40, 45, 65)
-    stroke.Thickness = 1
-    stroke.Parent = btn
-    
-    local tagLbl = Instance.new("TextLabel")
-    tagLbl.Size = UDim2.new(0, 38, 1, 0)
-    tagLbl.Position = UDim2.new(0, 8, 0, 0)
-    tagLbl.BackgroundTransparency = 1
-    tagLbl.Text = "[" .. tag .. "]"
-    tagLbl.TextSize = 11
-    tagLbl.Font = Enum.Font.GothamBold
-    tagLbl.TextColor3 = Color3.fromRGB(0, 180, 255)
-    tagLbl.Parent = btn
-    
-    local titleLbl = Instance.new("TextLabel")
-    titleLbl.Size = UDim2.new(1, -60, 1, 0)
-    titleLbl.Position = UDim2.new(0, 48, 0, 0)
-    titleLbl.BackgroundTransparency = 1
-    titleLbl.Text = text
-    titleLbl.TextSize = 12
-    titleLbl.Font = Enum.Font.GothamBold
-    titleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-    titleLbl.Parent = btn
-    
-    return btn, stroke
 end
 
 createSectionHeader("PLAYER ESP & VISUALS", UtilsPage)
@@ -473,7 +438,7 @@ EspRow.Parent = UtilsPage
 
 local EspToggleBtn = Instance.new("TextButton")
 EspToggleBtn.Size = UDim2.new(1, -44, 1, 0)
-EspToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 23, 33)
+EspToggleBtn.BackgroundColor3 = Color3.fromRGB(22, 15, 38)
 EspToggleBtn.Text = ""
 EspToggleBtn.AutoButtonColor = false
 EspToggleBtn.Parent = EspRow
@@ -483,7 +448,7 @@ EspToggleCorner.CornerRadius = UDim.new(0, 8)
 EspToggleCorner.Parent = EspToggleBtn
 
 local EspStroke = Instance.new("UIStroke")
-EspStroke.Color = Color3.fromRGB(40, 45, 65)
+EspStroke.Color = Color3.fromRGB(55, 35, 85)
 EspStroke.Thickness = 1
 EspStroke.Parent = EspToggleBtn
 
@@ -494,7 +459,7 @@ EspTagLbl.BackgroundTransparency = 1
 EspTagLbl.Text = "[ESP]"
 EspTagLbl.TextSize = 11
 EspTagLbl.Font = Enum.Font.GothamBold
-EspTagLbl.TextColor3 = Color3.fromRGB(0, 180, 255)
+EspTagLbl.TextColor3 = Color3.fromRGB(190, 100, 255)
 EspTagLbl.Parent = EspToggleBtn
 
 local EspTitleLbl = Instance.new("TextLabel")
@@ -511,11 +476,11 @@ EspTitleLbl.Parent = EspToggleBtn
 local EspBadge = Instance.new("TextLabel")
 EspBadge.Size = UDim2.new(0, 52, 0, 22)
 EspBadge.Position = UDim2.new(1, -60, 0.5, -11)
-EspBadge.BackgroundColor3 = Color3.fromRGB(35, 40, 55)
+EspBadge.BackgroundColor3 = Color3.fromRGB(36, 24, 58)
 EspBadge.Text = "OFF"
 EspBadge.TextSize = 10
 EspBadge.Font = Enum.Font.GothamBold
-EspBadge.TextColor3 = Color3.fromRGB(150, 160, 180)
+EspBadge.TextColor3 = Color3.fromRGB(160, 140, 190)
 EspBadge.Parent = EspToggleBtn
 
 local EspBadgeCorner = Instance.new("UICorner")
@@ -525,9 +490,9 @@ EspBadgeCorner.Parent = EspBadge
 local EspGearBtn = Instance.new("TextButton")
 EspGearBtn.Size = UDim2.new(0, 38, 1, 0)
 EspGearBtn.Position = UDim2.new(1, -38, 0, 0)
-EspGearBtn.BackgroundColor3 = Color3.fromRGB(24, 28, 40)
+EspGearBtn.BackgroundColor3 = Color3.fromRGB(28, 18, 48)
 EspGearBtn.Text = "SET"
-EspGearBtn.TextColor3 = Color3.fromRGB(0, 190, 255)
+EspGearBtn.TextColor3 = Color3.fromRGB(190, 100, 255)
 EspGearBtn.TextSize = 11
 EspGearBtn.Font = Enum.Font.GothamBold
 EspGearBtn.Parent = EspRow
@@ -537,25 +502,21 @@ EspGearCorner.CornerRadius = UDim.new(0, 8)
 EspGearCorner.Parent = EspGearBtn
 
 local EspGearStroke = Instance.new("UIStroke")
-EspGearStroke.Color = Color3.fromRGB(45, 52, 75)
+EspGearStroke.Color = Color3.fromRGB(65, 40, 105)
 EspGearStroke.Thickness = 1
 EspGearStroke.Parent = EspGearBtn
 
 createSectionHeader("PLAYER UTILITIES", UtilsPage)
 local ClickTpBtn, ClickTpBadge, ClickTpStroke = createToggleCard("ClickTpBtn", "Click Teleport (Ctrl + Click)", "TP", UtilsPage, false)
+local ClickDeleteBtn, ClickDeleteBadge, ClickDeleteStroke = createToggleCard("ClickDeleteBtn", "Click to Delete Parts", "DEL", UtilsPage, false)
 local NoclipBtn, NoclipBadge, NoclipStroke = createToggleCard("NoclipBtn", "Noclip", "NC", UtilsPage, false)
 local InfJumpBtn, InfJumpBadge, InfJumpStroke = createToggleCard("InfJumpBtn", "Infinite Jump", "JMP", UtilsPage, false)
-
-createSectionHeader("MANAGEMENT", UtilsPage)
-local BtoolsBtn = createActionCard("BtoolsBtn", "Give BTools (F3X / Tools)", "TOOL", UtilsPage)
-local ConsoleBtn = createActionCard("ConsoleBtn", "Open Developer / Admin Console", "DEV", UtilsPage)
-local FullUnloadCard = createActionCard("FullUnloadCard", "Unload Script & Destroy GUI", "EXIT", UtilsPage)
 
 local EspSettingsFrame = Instance.new("Frame")
 EspSettingsFrame.Name = "EspSettingsFrame"
 EspSettingsFrame.Size = UDim2.new(0, 320, 0, 360)
 EspSettingsFrame.Position = UDim2.new(0.5, 205, 0.5, -180)
-EspSettingsFrame.BackgroundColor3 = Color3.fromRGB(15, 17, 25)
+EspSettingsFrame.BackgroundColor3 = Color3.fromRGB(15, 11, 26)
 EspSettingsFrame.BorderSizePixel = 0
 EspSettingsFrame.Visible = false
 EspSettingsFrame.Active = true
@@ -567,13 +528,13 @@ EspSettingsCorner.CornerRadius = UDim.new(0, 12)
 EspSettingsCorner.Parent = EspSettingsFrame
 
 local EspSettingsStroke = Instance.new("UIStroke")
-EspSettingsStroke.Color = Color3.fromRGB(0, 180, 255)
+EspSettingsStroke.Color = Color3.fromRGB(180, 70, 255)
 EspSettingsStroke.Thickness = 1.5
 EspSettingsStroke.Parent = EspSettingsFrame
 
 local EspSettingsTopBar = Instance.new("Frame")
 EspSettingsTopBar.Size = UDim2.new(1, 0, 0, 42)
-EspSettingsTopBar.BackgroundColor3 = Color3.fromRGB(22, 26, 38)
+EspSettingsTopBar.BackgroundColor3 = Color3.fromRGB(24, 16, 42)
 EspSettingsTopBar.BorderSizePixel = 0
 EspSettingsTopBar.Parent = EspSettingsFrame
 
@@ -600,7 +561,7 @@ EspSettingsCloseBtn.Text = "X"
 EspSettingsCloseBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
 EspSettingsCloseBtn.TextSize = 12
 EspSettingsCloseBtn.Font = Enum.Font.GothamBold
-EspSettingsCloseBtn.BackgroundColor3 = Color3.fromRGB(38, 25, 30)
+EspSettingsCloseBtn.BackgroundColor3 = Color3.fromRGB(44, 20, 36)
 EspSettingsCloseBtn.Parent = EspSettingsTopBar
 
 local EspSettingsCloseCorner = Instance.new("UICorner")
@@ -613,7 +574,7 @@ EspSettingsScroll.Position = UDim2.new(0, 10, 0, 46)
 EspSettingsScroll.BackgroundTransparency = 1
 EspSettingsScroll.BorderSizePixel = 0
 EspSettingsScroll.ScrollBarThickness = 3
-EspSettingsScroll.ScrollBarImageColor3 = Color3.fromRGB(0, 170, 255)
+EspSettingsScroll.ScrollBarImageColor3 = Color3.fromRGB(180, 70, 255)
 EspSettingsScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 EspSettingsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 EspSettingsScroll.Parent = EspSettingsFrame
@@ -638,11 +599,11 @@ PaletteLayout.Padding = UDim.new(0, 8)
 PaletteLayout.Parent = PaletteContainer
 
 local colorsList = {
-    {Color3.fromRGB(0, 180, 255), "Cyan"},
+    {Color3.fromRGB(180, 80, 255), "Neon Purple"},
+    {Color3.fromRGB(0, 190, 255), "Cyan"},
     {Color3.fromRGB(50, 255, 120), "Green"},
-    {Color3.fromRGB(255, 50, 50), "Red"},
+    {Color3.fromRGB(255, 50, 100), "Pink-Red"},
     {Color3.fromRGB(255, 215, 0), "Gold"},
-    {Color3.fromRGB(220, 80, 255), "Purple"},
     {Color3.fromRGB(255, 255, 255), "White"}
 }
 
@@ -705,17 +666,17 @@ local function switchTab(tab)
     if tab == "Players" then
         PlayersPage.Visible = true
         UtilsPage.Visible = false
-        TabPlayersBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 240)
+        TabPlayersBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 240)
         TabPlayersBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        TabUtilsBtn.BackgroundColor3 = Color3.fromRGB(20, 23, 33)
-        TabUtilsBtn.TextColor3 = Color3.fromRGB(150, 160, 180)
+        TabUtilsBtn.BackgroundColor3 = Color3.fromRGB(22, 15, 38)
+        TabUtilsBtn.TextColor3 = Color3.fromRGB(160, 140, 190)
     else
         PlayersPage.Visible = false
         UtilsPage.Visible = true
-        TabUtilsBtn.BackgroundColor3 = Color3.fromRGB(0, 140, 240)
+        TabUtilsBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 240)
         TabUtilsBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        TabPlayersBtn.BackgroundColor3 = Color3.fromRGB(20, 23, 33)
-        TabPlayersBtn.TextColor3 = Color3.fromRGB(150, 160, 180)
+        TabPlayersBtn.BackgroundColor3 = Color3.fromRGB(22, 15, 38)
+        TabPlayersBtn.TextColor3 = Color3.fromRGB(160, 140, 190)
     end
 end
 
@@ -800,6 +761,7 @@ local function unloadScript()
     if loopTpConnection then loopTpConnection:Disconnect() loopTpConnection = nil end
     if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
     if clickTpConnection then clickTpConnection:Disconnect() clickTpConnection = nil end
+    if clickDeleteConnection then clickDeleteConnection:Disconnect() clickDeleteConnection = nil end
     if infJumpConnection then infJumpConnection:Disconnect() infJumpConnection = nil end
     if espConnection then espConnection:Disconnect() espConnection = nil end
     
@@ -825,9 +787,7 @@ end
 
 _G.DQC_Hub_Unload = unloadScript
 
-UnloadBtn.MouseButton1Click:Connect(unloadScript)
-FullUnloadCard.MouseButton1Click:Connect(unloadScript)
-CloseBtn.MouseButton1Click:Connect(function() toggleUI(false) end)
+CloseBtn.MouseButton1Click:Connect(unloadScript)
 
 local function teleportToPlayer(target)
     if not target or target == LocalPlayer then return end
@@ -867,7 +827,7 @@ local function refreshPlayerList()
                 local Card = Instance.new("TextButton")
                 Card.Name = player.Name
                 Card.Size = UDim2.new(1, 0, 0, 42)
-                Card.BackgroundColor3 = (selectedPlayer == player) and Color3.fromRGB(0, 130, 230) or Color3.fromRGB(20, 23, 33)
+                Card.BackgroundColor3 = (selectedPlayer == player) and Color3.fromRGB(150, 50, 240) or Color3.fromRGB(22, 15, 38)
                 Card.Text = ""
                 Card.AutoButtonColor = false
                 Card.Parent = PlayerScroll
@@ -879,7 +839,7 @@ local function refreshPlayerList()
                 local Avatar = Instance.new("ImageLabel")
                 Avatar.Size = UDim2.new(0, 32, 0, 32)
                 Avatar.Position = UDim2.new(0, 5, 0.5, -16)
-                Avatar.BackgroundColor3 = Color3.fromRGB(30, 35, 48)
+                Avatar.BackgroundColor3 = Color3.fromRGB(34, 22, 55)
                 Avatar.Image = string.format("rbxthumb://type=AvatarHeadShot&id=%d&w=150&h=150", player.UserId)
                 Avatar.Parent = Card
                 
@@ -901,9 +861,9 @@ local function refreshPlayerList()
                 Card.MouseButton1Click:Connect(function()
                     selectedPlayer = player
                     for _, c in pairs(playerCards) do
-                        c.BackgroundColor3 = Color3.fromRGB(20, 23, 33)
+                        c.BackgroundColor3 = Color3.fromRGB(22, 15, 38)
                     end
-                    Card.BackgroundColor3 = Color3.fromRGB(0, 130, 230)
+                    Card.BackgroundColor3 = Color3.fromRGB(150, 50, 240)
                 end)
                 
                 table.insert(playerCards, Card)
@@ -921,11 +881,11 @@ LoopTpBtn.MouseButton1Click:Connect(function()
         loopTpConnection:Disconnect()
         loopTpConnection = nil
         LoopTpBtn.Text = "Follow [OFF]"
-        LoopTpBtn.BackgroundColor3 = Color3.fromRGB(30, 35, 48)
+        LoopTpBtn.BackgroundColor3 = Color3.fromRGB(32, 22, 52)
     else
         if selectedPlayer then
             LoopTpBtn.Text = "Follow [ON]"
-            LoopTpBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+            LoopTpBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 100)
             loopTpConnection = RunService.RenderStepped:Connect(function()
                 if selectedPlayer and selectedPlayer.Parent then
                     teleportToPlayer(selectedPlayer)
@@ -934,7 +894,7 @@ LoopTpBtn.MouseButton1Click:Connect(function()
                         loopTpConnection:Disconnect()
                         loopTpConnection = nil
                         LoopTpBtn.Text = "Follow [OFF]"
-                        LoopTpBtn.BackgroundColor3 = Color3.fromRGB(30, 35, 48)
+                        LoopTpBtn.BackgroundColor3 = Color3.fromRGB(32, 22, 52)
                     end
                 end
             end)
@@ -950,7 +910,7 @@ ViewBtn.MouseButton1Click:Connect(function()
         if hum then
             Camera.CameraSubject = hum
             ViewBtn.Text = "Spectate [ON: " .. selectedPlayer.DisplayName .. "]"
-            ViewBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
+            ViewBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 240)
         end
     else
         isSpectating = false
@@ -959,7 +919,7 @@ ViewBtn.MouseButton1Click:Connect(function()
             if hum then Camera.CameraSubject = hum end
         end
         ViewBtn.Text = "Spectate [OFF]"
-        ViewBtn.BackgroundColor3 = Color3.fromRGB(30, 35, 48)
+        ViewBtn.BackgroundColor3 = Color3.fromRGB(32, 22, 52)
     end
 end)
 
@@ -972,7 +932,7 @@ Players.PlayerRemoving:Connect(function(player)
             loopTpConnection:Disconnect()
             loopTpConnection = nil
             LoopTpBtn.Text = "Follow [OFF]"
-            LoopTpBtn.BackgroundColor3 = Color3.fromRGB(30, 35, 48)
+            LoopTpBtn.BackgroundColor3 = Color3.fromRGB(32, 22, 52)
         end
     end
     if espObjects[player] then
@@ -1140,13 +1100,13 @@ local function toggleToggleCard(badge, stroke, state)
     if state then
         badge.Text = "ON"
         badge.TextColor3 = Color3.fromRGB(255, 255, 255)
-        badge.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
-        stroke.Color = Color3.fromRGB(0, 180, 100)
+        badge.BackgroundColor3 = Color3.fromRGB(150, 50, 240)
+        stroke.Color = Color3.fromRGB(170, 60, 255)
     else
         badge.Text = "OFF"
-        badge.TextColor3 = Color3.fromRGB(150, 160, 180)
-        badge.BackgroundColor3 = Color3.fromRGB(35, 40, 55)
-        stroke.Color = Color3.fromRGB(40, 45, 65)
+        badge.TextColor3 = Color3.fromRGB(160, 140, 190)
+        badge.BackgroundColor3 = Color3.fromRGB(36, 24, 58)
+        stroke.Color = Color3.fromRGB(55, 35, 85)
     end
 end
 
@@ -1225,6 +1185,31 @@ ClickTpBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+ClickDeleteBtn.MouseButton1Click:Connect(function()
+    clickDeleteEnabled = not clickDeleteEnabled
+    toggleToggleCard(ClickDeleteBadge, ClickDeleteStroke, clickDeleteEnabled)
+    
+    if clickDeleteEnabled then
+        local mouse = LocalPlayer:GetMouse()
+        clickDeleteConnection = UserInputService.InputBegan:Connect(function(input, gpe)
+            if not gpe and input.UserInputType == Enum.UserInputType.MouseButton1 then
+                local target = mouse.Target
+                if target and target:IsDescendantOf(workspace) then
+                    local myChar = LocalPlayer.Character
+                    if not (myChar and target:IsDescendantOf(myChar)) then
+                        target:Destroy()
+                    end
+                end
+            end
+        end)
+    else
+        if clickDeleteConnection then
+            clickDeleteConnection:Disconnect()
+            clickDeleteConnection = nil
+        end
+    end
+end)
+
 NoclipBtn.MouseButton1Click:Connect(function()
     noclipEnabled = not noclipEnabled
     toggleToggleCard(NoclipBadge, NoclipStroke, noclipEnabled)
@@ -1268,31 +1253,6 @@ InfJumpBtn.MouseButton1Click:Connect(function()
             infJumpConnection = nil
         end
     end
-end)
-
-BtoolsBtn.MouseButton1Click:Connect(function()
-    pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/MaksYTD/themes/master/OPBtools.txt", true))()
-    end)
-    for _, id in ipairs({1, 2, 3, 4}) do
-        local t = Instance.new("HopperBin")
-        t.BinType = id
-        t.Parent = LocalPlayer:WaitForChild("Backpack")
-    end
-    StarterGui:SetCore("SendNotification", {
-        Title = "Dark Quiet Community " .. VERSION_TAG,
-        Text = "BTools added to inventory.",
-        Duration = 3
-    })
-end)
-
-ConsoleBtn.MouseButton1Click:Connect(function()
-    pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/MaksYTD/themes/master/Admin%20console", true))()
-    end)
-    pcall(function()
-        StarterGui:SetCore("DevConsoleVisible", true)
-    end)
 end)
 
 task.spawn(function()
