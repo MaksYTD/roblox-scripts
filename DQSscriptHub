@@ -8,6 +8,7 @@ local Camera = workspace.CurrentCamera
 
 local TOGGLE_KEY = Enum.KeyCode.RightControl
 local GUI_NAME = "DarkQuietCommunity_Hub"
+local VERSION_TAG = "v0.0.3"
 local parentGui = (gethui and gethui()) or game:GetService("CoreGui") or LocalPlayer:WaitForChild("PlayerGui")
 
 if _G.DQC_Hub_Unload then
@@ -120,9 +121,9 @@ Title.BackgroundTransparency = 1
 Title.Parent = TopBar
 
 local Subtitle = Instance.new("TextLabel")
-Subtitle.Size = UDim2.new(0, 180, 0, 18)
+Subtitle.Size = UDim2.new(0, 200, 0, 18)
 Subtitle.Position = UDim2.new(0, 16, 0, 27)
-Subtitle.Text = "by makor444"
+Subtitle.Text = "by makor444  •  " .. VERSION_TAG
 Subtitle.TextColor3 = Color3.fromRGB(0, 180, 255)
 Subtitle.TextSize = 11
 Subtitle.Font = Enum.Font.GothamSemibold
@@ -816,7 +817,7 @@ local function unloadScript()
     _G.DQC_Hub_Unload = nil
     
     StarterGui:SetCore("SendNotification", {
-        Title = "Dark Quiet Community",
+        Title = "Dark Quiet Community " .. VERSION_TAG,
         Text = "Script unloaded successfully.",
         Duration = 3
     })
@@ -1279,7 +1280,7 @@ BtoolsBtn.MouseButton1Click:Connect(function()
         t.Parent = LocalPlayer:WaitForChild("Backpack")
     end
     StarterGui:SetCore("SendNotification", {
-        Title = "Dark Quiet Community",
+        Title = "Dark Quiet Community " .. VERSION_TAG,
         Text = "BTools added to inventory.",
         Duration = 3
     })
