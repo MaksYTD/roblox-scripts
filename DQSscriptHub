@@ -1,16 +1,30 @@
+-- ==============================================================================
+-- [DARK QUIET COMMUNITY HUB - V0.0.5]
+-- AUTHOR: makor444
+-- THEME: DARK PURPLE NEON
+-- ==============================================================================
+
+-- ==============================================================================
+-- [SECTION 1: SERVICES & GLOBAL CONSTANTS]
+-- ==============================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local StarterGui = game:GetService("StarterGui")
+local TeleportService = game:GetService("TeleportService")
+local VirtualUser = game:GetService("VirtualUser")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 local TOGGLE_KEY = Enum.KeyCode.RightControl
 local GUI_NAME = "DarkQuietCommunity_Hub"
-local VERSION_TAG = "v0.0.4"
+local VERSION_TAG = "v0.0.5"
 local parentGui = (gethui and gethui()) or game:GetService("CoreGui") or LocalPlayer:WaitForChild("PlayerGui")
 
+-- ==============================================================================
+-- [SECTION 2: STATE VARIABLES & SESSION AUTO-CLEANUP]
+-- ==============================================================================
 if _G.DQC_Hub_Unload then
     pcall(_G.DQC_Hub_Unload)
     _G.DQC_Hub_Unload = nil
@@ -26,6 +40,7 @@ local noclipConnection = nil
 local clickTpConnection = nil
 local clickDeleteConnection = nil
 local infJumpConnection = nil
+local antiAfkConnection = nil
 local espConnection = nil
 
 local espMasterEnabled = false
@@ -46,8 +61,12 @@ local noclipEnabled = false
 local clickTpEnabled = false
 local clickDeleteEnabled = false
 local infJumpEnabled = false
+local antiAfkEnabled = false
 local isSpectating = false
 
+-- ==============================================================================
+-- [SECTION 3: CORE SCREEN GUI & FLOATING TOGGLE BUBBLE]
+-- ==============================================================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = GUI_NAME
 ScreenGui.ResetOnSpawn = false
@@ -88,6 +107,9 @@ ToggleIcon.TextSize = 13
 ToggleIcon.TextColor3 = Color3.fromRGB(230, 150, 255)
 ToggleIcon.Parent = ToggleButton
 
+-- ==============================================================================
+-- [SECTION 4: MAIN WINDOW & TOPBAR NAVIGATION]
+-- ==============================================================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 380, 0, 500)
@@ -228,6 +250,9 @@ local TabUtilsCorner = Instance.new("UICorner")
 TabUtilsCorner.CornerRadius = UDim.new(0, 6)
 TabUtilsCorner.Parent = TabUtilsBtn
 
+-- ==============================================================================
+-- [SECTION 5: PLAYERS PAGE & TELEPORTATION UI]
+-- ==============================================================================
 local PlayersPage = Instance.new("Frame")
 PlayersPage.Name = "PlayersPage"
 PlayersPage.Size = UDim2.new(1, 0, 1, -102)
@@ -333,6 +358,9 @@ local ViewCorner = Instance.new("UICorner")
 ViewCorner.CornerRadius = UDim.new(0, 8)
 ViewCorner.Parent = ViewBtn
 
+-- ==============================================================================
+-- [SECTION 6: UTILITIES PAGE & UI FACTORIES]
+-- ==============================================================================
 local UtilsPage = Instance.new("ScrollingFrame")
 UtilsPage.Name = "UtilsPage"
 UtilsPage.Size = UDim2.new(1, 0, 1, -102)
@@ -390,19 +418,19 @@ local function createToggleCard(name, text, tag, parent, defaultState)
     stroke.Parent = btn
     
     local tagLbl = Instance.new("TextLabel")
-    tagLbl.Size = UDim2.new(0, 38, 1, 0)
+    tagLbl.Size = UDim2.new(0, 44, 1, 0)
     tagLbl.Position = UDim2.new(0, 8, 0, 0)
     tagLbl.BackgroundTransparency = 1
     tagLbl.Text = "[" .. tag .. "]"
-    tagLbl.TextSize = 11
+    tagLbl.TextSize = 10
     tagLbl.Font = Enum.Font.GothamBold
     tagLbl.TextColor3 = Color3.fromRGB(190, 100, 255)
     tagLbl.Parent = btn
     
     local titleLbl = Instance.new("TextLabel")
     titleLbl.Name = "TitleLabel"
-    titleLbl.Size = UDim2.new(1, -110, 1, 0)
-    titleLbl.Position = UDim2.new(0, 48, 0, 0)
+    titleLbl.Size = UDim2.new(1, -114, 1, 0)
+    titleLbl.Position = UDim2.new(0, 52, 0, 0)
     titleLbl.BackgroundTransparency = 1
     titleLbl.Text = text
     titleLbl.TextSize = 12
@@ -427,6 +455,48 @@ local function createToggleCard(name, text, tag, parent, defaultState)
     badgeCorner.Parent = badge
     
     return btn, badge, stroke
+end
+
+local function createActionCard(name, text, tag, parent)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(22, 15, 38)
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    btn.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(55, 35, 85)
+    stroke.Thickness = 1
+    stroke.Parent = btn
+    
+    local tagLbl = Instance.new("TextLabel")
+    tagLbl.Size = UDim2.new(0, 44, 1, 0)
+    tagLbl.Position = UDim2.new(0, 8, 0, 0)
+    tagLbl.BackgroundTransparency = 1
+    tagLbl.Text = "[" .. tag .. "]"
+    tagLbl.TextSize = 10
+    tagLbl.Font = Enum.Font.GothamBold
+    tagLbl.TextColor3 = Color3.fromRGB(190, 100, 255)
+    tagLbl.Parent = btn
+    
+    local titleLbl = Instance.new("TextLabel")
+    titleLbl.Size = UDim2.new(1, -60, 1, 0)
+    titleLbl.Position = UDim2.new(0, 52, 0, 0)
+    titleLbl.BackgroundTransparency = 1
+    titleLbl.Text = text
+    titleLbl.TextSize = 12
+    titleLbl.Font = Enum.Font.GothamBold
+    titleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleLbl.TextXAlignment = Enum.TextXAlignment.Left
+    titleLbl.Parent = btn
+    
+    return btn, stroke
 end
 
 createSectionHeader("PLAYER ESP & VISUALS", UtilsPage)
@@ -506,12 +576,19 @@ EspGearStroke.Color = Color3.fromRGB(65, 40, 105)
 EspGearStroke.Thickness = 1
 EspGearStroke.Parent = EspGearBtn
 
-createSectionHeader("PLAYER UTILITIES", UtilsPage)
+createSectionHeader("PLAYER MOVEMENT & INTERACTION", UtilsPage)
 local ClickTpBtn, ClickTpBadge, ClickTpStroke = createToggleCard("ClickTpBtn", "Click Teleport (Ctrl + Click)", "TP", UtilsPage, false)
 local ClickDeleteBtn, ClickDeleteBadge, ClickDeleteStroke = createToggleCard("ClickDeleteBtn", "Click to Delete Parts", "DEL", UtilsPage, false)
 local NoclipBtn, NoclipBadge, NoclipStroke = createToggleCard("NoclipBtn", "Noclip", "NC", UtilsPage, false)
 local InfJumpBtn, InfJumpBadge, InfJumpStroke = createToggleCard("InfJumpBtn", "Infinite Jump", "JMP", UtilsPage, false)
 
+createSectionHeader("AUTOMATION & SERVER TOOLS", UtilsPage)
+local AntiAfkBtn, AntiAfkBadge, AntiAfkStroke = createToggleCard("AntiAfkBtn", "Anti-AFK (No 20m Kick)", "AFK", UtilsPage, false)
+local RejoinBtn = createActionCard("RejoinBtn", "Rejoin Current Server", "JOIN", UtilsPage)
+
+-- ==============================================================================
+-- [SECTION 7: ESP SETTINGS MODAL & COLOR PALETTE]
+-- ==============================================================================
 local EspSettingsFrame = Instance.new("Frame")
 EspSettingsFrame.Name = "EspSettingsFrame"
 EspSettingsFrame.Size = UDim2.new(0, 320, 0, 360)
@@ -647,6 +724,9 @@ local EspDistBtn, EspDistBadge, EspDistStroke = createToggleCard("EspDistBtn", "
 local EspToolBtn, EspToolBadge, EspToolStroke = createToggleCard("EspToolBtn", "Show Held Tool", "TOOL", EspSettingsScroll, true)
 local EspTracerBtn, EspTracerBadge, EspTracerStroke = createToggleCard("EspTracerBtn", "Show Tracers / Lines", "LINE", EspSettingsScroll, false)
 
+-- ==============================================================================
+-- [SECTION 8: UI ANIMATIONS, TAB SWITCHING & DRAGGABLE FRAMES]
+-- ==============================================================================
 local function toggleEspSettings(state)
     if state == nil then state = not isEspSettingsOpen end
     isEspSettingsOpen = state
@@ -744,6 +824,9 @@ makeDraggable(MainFrame)
 makeDraggable(ToggleButton)
 makeDraggable(EspSettingsFrame)
 
+-- ==============================================================================
+-- [SECTION 9: SCRIPT UNLOADER & FULL CLEANUP ENGINE]
+-- ==============================================================================
 local function cleanupEsp()
     for _, item in pairs(espObjects) do
         if item.Highlight and item.Highlight.Parent then item.Highlight:Destroy() end
@@ -763,6 +846,7 @@ local function unloadScript()
     if clickTpConnection then clickTpConnection:Disconnect() clickTpConnection = nil end
     if clickDeleteConnection then clickDeleteConnection:Disconnect() clickDeleteConnection = nil end
     if infJumpConnection then infJumpConnection:Disconnect() infJumpConnection = nil end
+    if antiAfkConnection then antiAfkConnection:Disconnect() antiAfkConnection = nil end
     if espConnection then espConnection:Disconnect() espConnection = nil end
     
     cleanupEsp()
@@ -786,9 +870,11 @@ local function unloadScript()
 end
 
 _G.DQC_Hub_Unload = unloadScript
-
 CloseBtn.MouseButton1Click:Connect(unloadScript)
 
+-- ==============================================================================
+-- [SECTION 10: PLAYER TELEPORTATION & LIST REFRESH ENGINE]
+-- ==============================================================================
 local function teleportToPlayer(target)
     if not target or target == LocalPlayer then return end
     local targetChar = target.Character
@@ -947,6 +1033,9 @@ Players.PlayerRemoving:Connect(function(player)
     refreshPlayerList()
 end)
 
+-- ==============================================================================
+-- [SECTION 11: DYNAMIC ESP & PERSPECTIVE TRACER PIPELINE]
+-- ==============================================================================
 local function updatePlayerEsp()
     local myChar = LocalPlayer.Character
     local myRoot = myChar and (myChar:FindFirstChild("HumanoidRootPart") or myChar:FindFirstChild("Head"))
@@ -1096,6 +1185,9 @@ local function updatePlayerEsp()
     end
 end
 
+-- ==============================================================================
+-- [SECTION 12: UTILITY TOGGLES & EVENT LISTENERS]
+-- ==============================================================================
 local function toggleToggleCard(badge, stroke, state)
     if state then
         badge.Text = "ON"
@@ -1255,6 +1347,41 @@ InfJumpBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+AntiAfkBtn.MouseButton1Click:Connect(function()
+    antiAfkEnabled = not antiAfkEnabled
+    toggleToggleCard(AntiAfkBadge, AntiAfkStroke, antiAfkEnabled)
+    
+    if antiAfkEnabled then
+        antiAfkConnection = LocalPlayer.Idled:Connect(function()
+            VirtualUser:CaptureController()
+            VirtualUser:ClickButton2(Vector2.new(0, 0))
+        end)
+        StarterGui:SetCore("SendNotification", {
+            Title = "Dark Quiet Community " .. VERSION_TAG,
+            Text = "Anti-AFK activated.",
+            Duration = 3
+        })
+    else
+        if antiAfkConnection then
+            antiAfkConnection:Disconnect()
+            antiAfkConnection = nil
+        end
+    end
+end)
+
+RejoinBtn.MouseButton1Click:Connect(function()
+    if #Players:GetPlayers() <= 1 then
+        LocalPlayer:Kick("\nRejoining...")
+        task.wait(0.5)
+        TeleportService:Teleport(game.PlaceId, LocalPlayer)
+    else
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    end
+end)
+
+-- ==============================================================================
+-- [SECTION 13: SCRIPT INITIALIZATION & LIVE SCAN THREADS]
+-- ==============================================================================
 task.spawn(function()
     while ScreenGui and ScreenGui.Parent do
         task.wait(2.5)
