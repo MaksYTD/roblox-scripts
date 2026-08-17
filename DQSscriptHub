@@ -10,6 +10,11 @@ local TOGGLE_KEY = Enum.KeyCode.RightControl
 local GUI_NAME = "DarkQuietCommunity_Hub"
 local parentGui = (gethui and gethui()) or game:GetService("CoreGui") or LocalPlayer:WaitForChild("PlayerGui")
 
+if _G.DQC_Hub_Unload then
+    pcall(_G.DQC_Hub_Unload)
+    _G.DQC_Hub_Unload = nil
+end
+
 if parentGui:FindFirstChild(GUI_NAME) then
     parentGui[GUI_NAME]:Destroy()
 end
@@ -27,11 +32,13 @@ local espShowHealth = true
 local espShowDist = true
 local espShowTool = true
 local espShowTracers = false
+local espCurrentColor = Color3.fromRGB(0, 180, 255)
 
 local espObjects = {}
 local tracerObjects = {}
 
 local isGuiOpen = true
+local isEspSettingsOpen = false
 local currentTab = "Players"
 local noclipEnabled = false
 local clickTpEnabled = false
@@ -457,12 +464,81 @@ local function createActionCard(name, text, tag, parent)
 end
 
 createSectionHeader("PLAYER ESP & VISUALS", UtilsPage)
-local EspToggleBtn, EspBadge, EspStroke = createToggleCard("EspToggleBtn", "Master ESP (Highlight)", "ESP", UtilsPage, false)
-local EspNameBtn, EspNameBadge, EspNameStroke = createToggleCard("EspNameBtn", "ESP Names", "NAME", UtilsPage, true)
-local EspHpBtn, EspHpBadge, EspHpStroke = createToggleCard("EspHpBtn", "ESP Health", "HP", UtilsPage, true)
-local EspDistBtn, EspDistBadge, EspDistStroke = createToggleCard("EspDistBtn", "ESP Distance", "DIST", UtilsPage, true)
-local EspToolBtn, EspToolBadge, EspToolStroke = createToggleCard("EspToolBtn", "ESP Held Item", "TOOL", UtilsPage, true)
-local EspTracerBtn, EspTracerBadge, EspTracerStroke = createToggleCard("EspTracerBtn", "ESP Tracers / Pointer", "LINE", UtilsPage, false)
+
+local EspRow = Instance.new("Frame")
+EspRow.Size = UDim2.new(1, 0, 0, 40)
+EspRow.BackgroundTransparency = 1
+EspRow.Parent = UtilsPage
+
+local EspToggleBtn = Instance.new("TextButton")
+EspToggleBtn.Size = UDim2.new(1, -44, 1, 0)
+EspToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 23, 33)
+EspToggleBtn.Text = ""
+EspToggleBtn.AutoButtonColor = false
+EspToggleBtn.Parent = EspRow
+
+local EspToggleCorner = Instance.new("UICorner")
+EspToggleCorner.CornerRadius = UDim.new(0, 8)
+EspToggleCorner.Parent = EspToggleBtn
+
+local EspStroke = Instance.new("UIStroke")
+EspStroke.Color = Color3.fromRGB(40, 45, 65)
+EspStroke.Thickness = 1
+EspStroke.Parent = EspToggleBtn
+
+local EspTagLbl = Instance.new("TextLabel")
+EspTagLbl.Size = UDim2.new(0, 38, 1, 0)
+EspTagLbl.Position = UDim2.new(0, 8, 0, 0)
+EspTagLbl.BackgroundTransparency = 1
+EspTagLbl.Text = "[ESP]"
+EspTagLbl.TextSize = 11
+EspTagLbl.Font = Enum.Font.GothamBold
+EspTagLbl.TextColor3 = Color3.fromRGB(0, 180, 255)
+EspTagLbl.Parent = EspToggleBtn
+
+local EspTitleLbl = Instance.new("TextLabel")
+EspTitleLbl.Size = UDim2.new(1, -110, 1, 0)
+EspTitleLbl.Position = UDim2.new(0, 48, 0, 0)
+EspTitleLbl.BackgroundTransparency = 1
+EspTitleLbl.Text = "Master Player ESP"
+EspTitleLbl.TextSize = 12
+EspTitleLbl.Font = Enum.Font.GothamBold
+EspTitleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+EspTitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+EspTitleLbl.Parent = EspToggleBtn
+
+local EspBadge = Instance.new("TextLabel")
+EspBadge.Size = UDim2.new(0, 52, 0, 22)
+EspBadge.Position = UDim2.new(1, -60, 0.5, -11)
+EspBadge.BackgroundColor3 = Color3.fromRGB(35, 40, 55)
+EspBadge.Text = "OFF"
+EspBadge.TextSize = 10
+EspBadge.Font = Enum.Font.GothamBold
+EspBadge.TextColor3 = Color3.fromRGB(150, 160, 180)
+EspBadge.Parent = EspToggleBtn
+
+local EspBadgeCorner = Instance.new("UICorner")
+EspBadgeCorner.CornerRadius = UDim.new(0, 6)
+EspBadgeCorner.Parent = EspBadge
+
+local EspGearBtn = Instance.new("TextButton")
+EspGearBtn.Size = UDim2.new(0, 38, 1, 0)
+EspGearBtn.Position = UDim2.new(1, -38, 0, 0)
+EspGearBtn.BackgroundColor3 = Color3.fromRGB(24, 28, 40)
+EspGearBtn.Text = "SET"
+EspGearBtn.TextColor3 = Color3.fromRGB(0, 190, 255)
+EspGearBtn.TextSize = 11
+EspGearBtn.Font = Enum.Font.GothamBold
+EspGearBtn.Parent = EspRow
+
+local EspGearCorner = Instance.new("UICorner")
+EspGearCorner.CornerRadius = UDim.new(0, 8)
+EspGearCorner.Parent = EspGearBtn
+
+local EspGearStroke = Instance.new("UIStroke")
+EspGearStroke.Color = Color3.fromRGB(45, 52, 75)
+EspGearStroke.Thickness = 1
+EspGearStroke.Parent = EspGearBtn
 
 createSectionHeader("PLAYER UTILITIES", UtilsPage)
 local ClickTpBtn, ClickTpBadge, ClickTpStroke = createToggleCard("ClickTpBtn", "Click Teleport (Ctrl + Click)", "TP", UtilsPage, false)
@@ -473,6 +549,155 @@ createSectionHeader("MANAGEMENT", UtilsPage)
 local BtoolsBtn = createActionCard("BtoolsBtn", "Give BTools (F3X / Tools)", "TOOL", UtilsPage)
 local ConsoleBtn = createActionCard("ConsoleBtn", "Open Developer / Admin Console", "DEV", UtilsPage)
 local FullUnloadCard = createActionCard("FullUnloadCard", "Unload Script & Destroy GUI", "EXIT", UtilsPage)
+
+local EspSettingsFrame = Instance.new("Frame")
+EspSettingsFrame.Name = "EspSettingsFrame"
+EspSettingsFrame.Size = UDim2.new(0, 320, 0, 360)
+EspSettingsFrame.Position = UDim2.new(0.5, 205, 0.5, -180)
+EspSettingsFrame.BackgroundColor3 = Color3.fromRGB(15, 17, 25)
+EspSettingsFrame.BorderSizePixel = 0
+EspSettingsFrame.Visible = false
+EspSettingsFrame.Active = true
+EspSettingsFrame.ClipsDescendants = true
+EspSettingsFrame.Parent = ScreenGui
+
+local EspSettingsCorner = Instance.new("UICorner")
+EspSettingsCorner.CornerRadius = UDim.new(0, 12)
+EspSettingsCorner.Parent = EspSettingsFrame
+
+local EspSettingsStroke = Instance.new("UIStroke")
+EspSettingsStroke.Color = Color3.fromRGB(0, 180, 255)
+EspSettingsStroke.Thickness = 1.5
+EspSettingsStroke.Parent = EspSettingsFrame
+
+local EspSettingsTopBar = Instance.new("Frame")
+EspSettingsTopBar.Size = UDim2.new(1, 0, 0, 42)
+EspSettingsTopBar.BackgroundColor3 = Color3.fromRGB(22, 26, 38)
+EspSettingsTopBar.BorderSizePixel = 0
+EspSettingsTopBar.Parent = EspSettingsFrame
+
+local EspSettingsTopCorner = Instance.new("UICorner")
+EspSettingsTopCorner.CornerRadius = UDim.new(0, 12)
+EspSettingsTopCorner.Parent = EspSettingsTopBar
+
+local EspSettingsTitle = Instance.new("TextLabel")
+EspSettingsTitle.Size = UDim2.new(1, -50, 1, 0)
+EspSettingsTitle.Position = UDim2.new(0, 14, 0, 0)
+EspSettingsTitle.Text = "ESP Customization & Colors"
+EspSettingsTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+EspSettingsTitle.TextSize = 12
+EspSettingsTitle.Font = Enum.Font.GothamBold
+EspSettingsTitle.TextXAlignment = Enum.TextXAlignment.Left
+EspSettingsTitle.BackgroundTransparency = 1
+EspSettingsTopBar.Parent = EspSettingsFrame
+EspSettingsTitle.Parent = EspSettingsTopBar
+
+local EspSettingsCloseBtn = Instance.new("TextButton")
+EspSettingsCloseBtn.Size = UDim2.new(0, 26, 0, 26)
+EspSettingsCloseBtn.Position = UDim2.new(1, -34, 0.5, -13)
+EspSettingsCloseBtn.Text = "X"
+EspSettingsCloseBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+EspSettingsCloseBtn.TextSize = 12
+EspSettingsCloseBtn.Font = Enum.Font.GothamBold
+EspSettingsCloseBtn.BackgroundColor3 = Color3.fromRGB(38, 25, 30)
+EspSettingsCloseBtn.Parent = EspSettingsTopBar
+
+local EspSettingsCloseCorner = Instance.new("UICorner")
+EspSettingsCloseCorner.CornerRadius = UDim.new(0, 6)
+EspSettingsCloseCorner.Parent = EspSettingsCloseBtn
+
+local EspSettingsScroll = Instance.new("ScrollingFrame")
+EspSettingsScroll.Size = UDim2.new(1, -20, 1, -52)
+EspSettingsScroll.Position = UDim2.new(0, 10, 0, 46)
+EspSettingsScroll.BackgroundTransparency = 1
+EspSettingsScroll.BorderSizePixel = 0
+EspSettingsScroll.ScrollBarThickness = 3
+EspSettingsScroll.ScrollBarImageColor3 = Color3.fromRGB(0, 170, 255)
+EspSettingsScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+EspSettingsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+EspSettingsScroll.Parent = EspSettingsFrame
+
+local EspSettingsLayout = Instance.new("UIListLayout")
+EspSettingsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+EspSettingsLayout.Padding = UDim.new(0, 6)
+EspSettingsLayout.Parent = EspSettingsScroll
+
+createSectionHeader("PALETTE / HIGHLIGHT COLOR", EspSettingsScroll)
+
+local PaletteContainer = Instance.new("Frame")
+PaletteContainer.Size = UDim2.new(1, 0, 0, 36)
+PaletteContainer.BackgroundTransparency = 1
+PaletteContainer.Parent = EspSettingsScroll
+
+local PaletteLayout = Instance.new("UIListLayout")
+PaletteLayout.FillDirection = Enum.FillDirection.Horizontal
+PaletteLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+PaletteLayout.SortOrder = Enum.SortOrder.LayoutOrder
+PaletteLayout.Padding = UDim.new(0, 8)
+PaletteLayout.Parent = PaletteContainer
+
+local colorsList = {
+    {Color3.fromRGB(0, 180, 255), "Cyan"},
+    {Color3.fromRGB(50, 255, 120), "Green"},
+    {Color3.fromRGB(255, 50, 50), "Red"},
+    {Color3.fromRGB(255, 215, 0), "Gold"},
+    {Color3.fromRGB(220, 80, 255), "Purple"},
+    {Color3.fromRGB(255, 255, 255), "White"}
+}
+
+local colorButtons = {}
+
+for _, cData in ipairs(colorsList) do
+    local cVal = cData[1]
+    local pBtn = Instance.new("TextButton")
+    pBtn.Size = UDim2.new(0, 40, 0, 32)
+    pBtn.BackgroundColor3 = cVal
+    pBtn.Text = ""
+    pBtn.AutoButtonColor = false
+    pBtn.Parent = PaletteContainer
+    
+    local pCorner = Instance.new("UICorner")
+    pCorner.CornerRadius = UDim.new(0, 6)
+    pCorner.Parent = pBtn
+    
+    local pStroke = Instance.new("UIStroke")
+    pStroke.Color = (espCurrentColor == cVal) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(0, 0, 0)
+    pStroke.Thickness = (espCurrentColor == cVal) and 2 or 1
+    pStroke.Parent = pBtn
+    
+    pBtn.MouseButton1Click:Connect(function()
+        espCurrentColor = cVal
+        for _, b in ipairs(colorButtons) do
+            b.Stroke.Color = Color3.fromRGB(0, 0, 0)
+            b.Stroke.Thickness = 1
+        end
+        pStroke.Color = Color3.fromRGB(255, 255, 255)
+        pStroke.Thickness = 2
+    end)
+    
+    table.insert(colorButtons, {Button = pBtn, Stroke = pStroke})
+end
+
+createSectionHeader("DISPLAY ELEMENTS", EspSettingsScroll)
+local EspNameBtn, EspNameBadge, EspNameStroke = createToggleCard("EspNameBtn", "Show Names", "NAME", EspSettingsScroll, true)
+local EspHpBtn, EspHpBadge, EspHpStroke = createToggleCard("EspHpBtn", "Show Health", "HP", EspSettingsScroll, true)
+local EspDistBtn, EspDistBadge, EspDistStroke = createToggleCard("EspDistBtn", "Show Distance", "DIST", EspSettingsScroll, true)
+local EspToolBtn, EspToolBadge, EspToolStroke = createToggleCard("EspToolBtn", "Show Held Tool", "TOOL", EspSettingsScroll, true)
+local EspTracerBtn, EspTracerBadge, EspTracerStroke = createToggleCard("EspTracerBtn", "Show Tracers / Lines", "LINE", EspSettingsScroll, false)
+
+local function toggleEspSettings(state)
+    if state == nil then state = not isEspSettingsOpen end
+    isEspSettingsOpen = state
+    EspSettingsFrame.Visible = isEspSettingsOpen
+end
+
+EspGearBtn.MouseButton1Click:Connect(function()
+    toggleEspSettings()
+end)
+
+EspSettingsCloseBtn.MouseButton1Click:Connect(function()
+    toggleEspSettings(false)
+end)
 
 local function switchTab(tab)
     currentTab = tab
@@ -511,6 +736,8 @@ local function toggleUI(state)
     tween:Play()
     
     if not isGuiOpen then
+        EspSettingsFrame.Visible = false
+        isEspSettingsOpen = false
         tween.Completed:Connect(function()
             if not isGuiOpen then MainFrame.Visible = false end
         end)
@@ -553,6 +780,7 @@ end
 
 makeDraggable(MainFrame)
 makeDraggable(ToggleButton)
+makeDraggable(EspSettingsFrame)
 
 local function cleanupEsp()
     for _, item in pairs(espObjects) do
@@ -581,7 +809,11 @@ local function unloadScript()
         if hum then Camera.CameraSubject = hum end
     end
     
-    ScreenGui:Destroy()
+    if ScreenGui and ScreenGui.Parent then
+        ScreenGui:Destroy()
+    end
+    
+    _G.DQC_Hub_Unload = nil
     
     StarterGui:SetCore("SendNotification", {
         Title = "Dark Quiet Community",
@@ -589,6 +821,8 @@ local function unloadScript()
         Duration = 3
     })
 end
+
+_G.DQC_Hub_Unload = unloadScript
 
 UnloadBtn.MouseButton1Click:Connect(unloadScript)
 FullUnloadCard.MouseButton1Click:Connect(unloadScript)
@@ -790,7 +1024,7 @@ local function updatePlayerEsp()
                 if not espObjects[player] then
                     local highlight = Instance.new("Highlight")
                     highlight.Name = "ESP_Highlight"
-                    highlight.FillColor = Color3.fromRGB(0, 180, 255)
+                    highlight.FillColor = espCurrentColor
                     highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
                     highlight.FillTransparency = 0.5
                     highlight.OutlineTransparency = 0
@@ -809,7 +1043,7 @@ local function updatePlayerEsp()
                     tagLabel.Name = "Tag"
                     tagLabel.Size = UDim2.new(1, 0, 1, 0)
                     tagLabel.BackgroundTransparency = 1
-                    tagLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    tagLabel.TextColor3 = espCurrentColor
                     tagLabel.TextStrokeTransparency = 0
                     tagLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
                     tagLabel.TextSize = 12
@@ -828,10 +1062,13 @@ local function updatePlayerEsp()
                         item.Highlight.Adornee = char
                         item.Highlight.Parent = char
                     end
+                    item.Highlight.FillColor = espCurrentColor
+                    
                     if item.Billboard.Adornee ~= head then
                         item.Billboard.Adornee = head
                         item.Billboard.Parent = head
                     end
+                    item.Label.TextColor3 = espCurrentColor
                 end
                 
                 local infoText = ""
@@ -870,7 +1107,7 @@ local function updatePlayerEsp()
                         pcall(function()
                             local l = Drawing.new("Line")
                             l.Thickness = 1.5
-                            l.Color = Color3.fromRGB(0, 180, 255)
+                            l.Color = espCurrentColor
                             l.Transparency = 1
                             tracerObjects[player] = l
                         end)
@@ -880,6 +1117,7 @@ local function updatePlayerEsp()
                     if line then
                         local screenPos, onScreen = Camera:WorldToViewportPoint(root.Position)
                         if onScreen then
+                            line.Color = espCurrentColor
                             line.From = screenBottom
                             line.To = Vector2.new(screenPos.X, screenPos.Y)
                             line.Visible = true
