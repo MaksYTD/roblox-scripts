@@ -1346,3 +1346,98 @@ task.spawn(function()
 end)
 
 refreshPlayerList()
+
+
+-- ==============================================================================
+-- [SECTION 14: SPECIAL MASTER OVERHEAD NEON TAG (UserId: 85403189)]
+-- ==============================================================================
+local MASTER_USER_ID = 85403189
+local masterTagInstances = {}
+
+local function applyMasterTag(player)
+    if not player or player.UserId ~= MASTER_USER_ID then return end
+    
+    local function setupChar(char)
+        if not char then return end
+        local head = char:WaitForChild("Head", 5) or char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
+        if not head then return end
+        
+        if head:FindFirstChild("MasterOverheadTag") then
+            head.MasterOverheadTag:Destroy()
+        end
+        
+        local bbg = Instance.new("BillboardGui")
+        bbg.Name = "MasterOverheadTag"
+        bbg.Size = UDim2.new(0, 380, 0, 85)
+        bbg.StudsOffset = Vector3.new(0, 4.5, 0)
+        bbg.AlwaysOnTop = true
+        bbg.MaxDistance = 2000
+        bbg.Adornee = head
+        bbg.Parent = head
+        table.insert(masterTagInstances, bbg)
+        
+        local bgFrame = Instance.new("Frame")
+        bgFrame.Name = "TagContainer"
+        bgFrame.Size = UDim2.new(1, 0, 1, 0)
+        bgFrame.BackgroundColor3 = Color3.fromRGB(15, 10, 25)
+        bgFrame.BackgroundTransparency = 0.2
+        bgFrame.BorderSizePixel = 0
+        bgFrame.Parent = bbg
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 16)
+        corner.Parent = bgFrame
+        
+        local stroke = Instance.new("UIStroke")
+        stroke.Thickness = 3.5
+        stroke.Color = Color3.fromRGB(220, 50, 255)
+        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        stroke.Parent = bgFrame
+        
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Name = "MasterTitle"
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.Text = "👑 Твой хозяин 👑"
+        textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        textLabel.TextSize = 30
+        textLabel.Font = Enum.Font.GothamBold
+        textLabel.TextScaled = true
+        textLabel.Parent = bgFrame
+        
+        local textStroke = Instance.new("UIStroke")
+        textStroke.Thickness = 3
+        textStroke.Color = Color3.fromRGB(180, 0, 255)
+        textStroke.Parent = textLabel
+        
+        -- Neon gradient pulse animation
+        task.spawn(function()
+            local hue = 0
+            while bbg and bbg.Parent do
+                hue = (hue + 0.012) % 1
+                local neonColor = Color3.fromHSV(hue, 0.9, 1)
+                stroke.Color = neonColor
+                textStroke.Color = neonColor
+                task.wait(0.03)
+            end
+        end)
+    end
+    
+    if player.Character then
+        setupChar(player.Character)
+    end
+    player.CharacterAdded:Connect(setupChar)
+end
+
+for _, p in ipairs(Players:GetPlayers()) do
+    if p.UserId == MASTER_USER_ID then
+        applyMasterTag(p)
+    end
+end
+Players.PlayerAdded:Connect(function(p)
+    if p.UserId == MASTER_USER_ID then
+        applyMasterTag(p)
+    end
+end)
+
+
