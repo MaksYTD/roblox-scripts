@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [DARK QUIET COMMUNITY HUB - V0.0.5]
+-- [DARK QUIET COMMUNITY HUB - V0.0.6]
 -- AUTHOR: makor444
 -- THEME: DARK PURPLE NEON
 -- ==============================================================================
@@ -12,13 +12,12 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local StarterGui = game:GetService("StarterGui")
-local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 local TOGGLE_KEY = Enum.KeyCode.RightControl
 local GUI_NAME = "DarkQuietCommunity_Hub"
-local VERSION_TAG = "v0.0.5"
+local VERSION_TAG = "v0.0.6"
 local parentGui = (gethui and gethui()) or game:GetService("CoreGui") or LocalPlayer:WaitForChild("PlayerGui")
 
 -- ==============================================================================
@@ -456,48 +455,6 @@ local function createToggleCard(name, text, tag, parent, defaultState)
     return btn, badge, stroke
 end
 
-local function createActionCard(name, text, tag, parent)
-    local btn = Instance.new("TextButton")
-    btn.Name = name
-    btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.BackgroundColor3 = Color3.fromRGB(22, 15, 38)
-    btn.Text = ""
-    btn.AutoButtonColor = false
-    btn.Parent = parent
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = btn
-    
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(55, 35, 85)
-    stroke.Thickness = 1
-    stroke.Parent = btn
-    
-    local tagLbl = Instance.new("TextLabel")
-    tagLbl.Size = UDim2.new(0, 44, 1, 0)
-    tagLbl.Position = UDim2.new(0, 8, 0, 0)
-    tagLbl.BackgroundTransparency = 1
-    tagLbl.Text = "[" .. tag .. "]"
-    tagLbl.TextSize = 10
-    tagLbl.Font = Enum.Font.GothamBold
-    tagLbl.TextColor3 = Color3.fromRGB(190, 100, 255)
-    tagLbl.Parent = btn
-    
-    local titleLbl = Instance.new("TextLabel")
-    titleLbl.Size = UDim2.new(1, -60, 1, 0)
-    titleLbl.Position = UDim2.new(0, 52, 0, 0)
-    titleLbl.BackgroundTransparency = 1
-    titleLbl.Text = text
-    titleLbl.TextSize = 12
-    titleLbl.Font = Enum.Font.GothamBold
-    titleLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-    titleLbl.Parent = btn
-    
-    return btn, stroke
-end
-
 createSectionHeader("PLAYER ESP & VISUALS", UtilsPage)
 
 local EspRow = Instance.new("Frame")
@@ -581,9 +538,8 @@ local ClickDeleteBtn, ClickDeleteBadge, ClickDeleteStroke = createToggleCard("Cl
 local NoclipBtn, NoclipBadge, NoclipStroke = createToggleCard("NoclipBtn", "Noclip", "NC", UtilsPage, false)
 local InfJumpBtn, InfJumpBadge, InfJumpStroke = createToggleCard("InfJumpBtn", "Infinite Jump", "JMP", UtilsPage, false)
 
-createSectionHeader("AUTOMATION & SERVER TOOLS", UtilsPage)
+createSectionHeader("AUTOMATION TOOLS", UtilsPage)
 local AntiAfkBtn, AntiAfkBadge, AntiAfkStroke = createToggleCard("AntiAfkBtn", "Anti-AFK (10m Safe Jump)", "AFK", UtilsPage, false)
-local RejoinBtn = createActionCard("RejoinBtn", "Rejoin Current Server", "JOIN", UtilsPage)
 
 -- ==============================================================================
 -- [SECTION 7: ESP SETTINGS MODAL & COLOR PALETTE]
@@ -1374,16 +1330,6 @@ AntiAfkBtn.MouseButton1Click:Connect(function()
             task.cancel(antiAfkThread)
             antiAfkThread = nil
         end
-    end
-end)
-
-RejoinBtn.MouseButton1Click:Connect(function()
-    if #Players:GetPlayers() <= 1 then
-        LocalPlayer:Kick("\nRejoining...")
-        task.wait(0.5)
-        TeleportService:Teleport(game.PlaceId, LocalPlayer)
-    else
-        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
     end
 end)
 
