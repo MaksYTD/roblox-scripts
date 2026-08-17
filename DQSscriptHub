@@ -13,7 +13,6 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local StarterGui = game:GetService("StarterGui")
 local TeleportService = game:GetService("TeleportService")
-local VirtualUser = game:GetService("VirtualUser")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
@@ -40,7 +39,7 @@ local noclipConnection = nil
 local clickTpConnection = nil
 local clickDeleteConnection = nil
 local infJumpConnection = nil
-local antiAfkConnection = nil
+local antiAfkThread = nil
 local espConnection = nil
 
 local espMasterEnabled = false
@@ -583,7 +582,7 @@ local NoclipBtn, NoclipBadge, NoclipStroke = createToggleCard("NoclipBtn", "Nocl
 local InfJumpBtn, InfJumpBadge, InfJumpStroke = createToggleCard("InfJumpBtn", "Infinite Jump", "JMP", UtilsPage, false)
 
 createSectionHeader("AUTOMATION & SERVER TOOLS", UtilsPage)
-local AntiAfkBtn, AntiAfkBadge, AntiAfkStroke = createToggleCard("AntiAfkBtn", "Anti-AFK (No 20m Kick)", "AFK", UtilsPage, false)
+local AntiAfkBtn, AntiAfkBadge, AntiAfkStroke = createToggleCard("AntiAfkBtn", "Anti-AFK (10m Safe Jump)", "AFK", UtilsPage, false)
 local RejoinBtn = createActionCard("RejoinBtn", "Rejoin Current Server", "JOIN", UtilsPage)
 
 -- ==============================================================================
@@ -846,9 +845,10 @@ local function unloadScript()
     if clickTpConnection then clickTpConnection:Disconnect() clickTpConnection = nil end
     if clickDeleteConnection then clickDeleteConnection:Disconnect() clickDeleteConnection = nil end
     if infJumpConnection then infJumpConnection:Disconnect() infJumpConnection = nil end
-    if antiAfkConnection then antiAfkConnection:Disconnect() antiAfkConnection = nil end
+    if antiAfkThread then task.cancel(antiAfkThread) antiAfkThread = nil end
     if espConnection then espConnection:Disconnect() espConnection = nil end
     
+    antiAfkEnabled = false
     cleanupEsp()
     
     if isSpectating and LocalPlayer.Character then
@@ -1352,19 +1352,27 @@ AntiAfkBtn.MouseButton1Click:Connect(function()
     toggleToggleCard(AntiAfkBadge, AntiAfkStroke, antiAfkEnabled)
     
     if antiAfkEnabled then
-        antiAfkConnection = LocalPlayer.Idled:Connect(function()
-            VirtualUser:CaptureController()
-            VirtualUser:ClickButton2(Vector2.new(0, 0))
+        if antiAfkThread then task.cancel(antiAfkThread) end
+        antiAfkThread = task.spawn(function()
+            while antiAfkEnabled do
+                task.wait(600)
+                if antiAfkEnabled and LocalPlayer.Character then
+                    local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+                    if hum and hum.Health > 0 then
+                        hum:ChangeState(Enum.HumanoidStateType.Jumping)
+                    end
+                end
+            end
         end)
         StarterGui:SetCore("SendNotification", {
             Title = "Dark Quiet Community " .. VERSION_TAG,
-            Text = "Anti-AFK activated.",
+            Text = "Safe Anti-AFK activated (10m Jump).",
             Duration = 3
         })
     else
-        if antiAfkConnection then
-            antiAfkConnection:Disconnect()
-            antiAfkConnection = nil
+        if antiAfkThread then
+            task.cancel(antiAfkThread)
+            antiAfkThread = nil
         end
     end
 end)
